@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+
+import { Task } from './task.schema';
 
 @Schema()
 export class User extends Document {
@@ -14,6 +16,9 @@ export class User extends Document {
 
     @Prop({ default: Date.now })
     userImg?: string;
+
+    @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tasks' }] })
+    tasks: Task[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
