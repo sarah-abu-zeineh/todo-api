@@ -1,11 +1,36 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Task } from 'src/schemas/task.schema';
+import { Model } from 'mongoose';
+import { User } from 'src/schemas/user.schema';
+import { TaskResponse } from 'src/interface/taskResponce.interface';
+import { response } from 'express';
 
 @Injectable()
 export class TasksService {
-  create(createTaskDto: CreateTaskDto) {
-    return 'This action adds a new task';
+  constructor(
+    @InjectModel(Task.name) private taskModel: Model<Task>,
+    @InjectModel(User.name) private userModel: Model<User>,
+
+  ) { }
+
+  async createTask(createTaskDto: CreateTaskDto, user): Promise<TaskResponse> {
+    try {
+      const newTask = await new this.taskModel(createTaskDto).save();
+
+      await this.userModel.findByIdAndUpdate(user.id, { $push: { tasks: newTask._id } });
+      const taskResponse: TaskResponse= {
+        status: 'success',
+        statusCode: 201,
+        task: newTask
+      }
+
+      return taskResponse;
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create task');
+    }
   }
 
   findAll() {
