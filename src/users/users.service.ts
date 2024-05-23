@@ -5,12 +5,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/schemas/user.schema';
 import { Model } from 'mongoose';
 import { FileService } from 'src/file/file.service';
+import { Pagination } from 'src/interface/pagination.interface';
+import { Task } from 'src/schemas/task.schema';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    private readonly fileService: FileService
+    @InjectModel(Task.name) private taskModel: Model<User>,
+    private readonly fileService: FileService,
   ) { }
 
   async create(createUserDto: CreateUserDto, image: Express.Multer.File | undefined) {
@@ -31,8 +34,35 @@ export class UsersService {
     return createdUser.save();
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async paginateUserTasks(userData, page: number = 1, limit: number = 15) {
+    const user = await this.userModel.findById(userData.id);
+    console.log(page, limit)
+
+    if (!user) {
+      throw new NotFoundException(`User not found`);
+    }
+
+    const totalItems = user.tasks.length;
+    const totalPages = Math.ceil(totalItems / limit) + 1;
+
+    await user.populate({
+      path: 'tasks',
+      model: this.taskModel,
+      options: {
+        skip: (page - 1) * limit,
+        limit: limit
+      }
+    });
+    const items = user.tasks;
+
+    return {
+      items,
+      totalItems: totalItems,
+      itemCount: items.length,
+      itemsPerPage: limit,
+      totalPages: totalPages,
+      currentPage: page,
+    };
   }
 
   async findById(id: string): Promise<User> {
