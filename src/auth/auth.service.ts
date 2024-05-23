@@ -12,6 +12,25 @@ export class AuthService {
     private jwtService: JwtService
   ) { }
 
+  async signUp(registerDto: RegisterDto, image: Express.Multer.File | undefined):
+    Promise<{ access_token: string }> {
+    const { email, password, name } = registerDto;
+    const userExists = await this.usersService.findByEmail(email);
+
+    if (userExists) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userData: RegisterDto = { email, password: hashedPassword, name };
+    const newUser = await this.usersService.create(userData, image);
+    const payload = { sub: newUser._id, username: newUser.name };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
+  }
+
   async signIn(email: string, password: string): Promise<{ access_token: string }> {
     const user = await this.usersService.findByEmail(email);
 
