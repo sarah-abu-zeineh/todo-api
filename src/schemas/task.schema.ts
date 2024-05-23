@@ -11,6 +11,8 @@ export class Task extends Document {
 
     @Prop({ required: true })
     status: string;
+
+    image? : string;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
