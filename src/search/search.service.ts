@@ -12,7 +12,6 @@ export class SearchService {
   ) {}
 
   async searchUserTasks(userData: string, searchTerm: string): Promise<Task[]> {
-    console.log(userData)
     const user = await this.userModel.findById(userData['id']).populate({
       path: 'tasks',
       model: this.taskModel,
