@@ -14,5 +14,6 @@ import { FileService } from 'src/file/file.service';
   ],
   controllers: [UsersController],
   providers: [UsersService, FileService],
+  exports: [UsersService]
 })
 export class UsersModule { }
