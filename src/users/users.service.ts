@@ -36,7 +36,6 @@ export class UsersService {
 
   async paginateUserTasks(userData, page: number = 1, limit: number = 15) {
     const user = await this.userModel.findById(userData.id);
-    console.log(page, limit)
 
     if (!user) {
       throw new NotFoundException(`User not found`);
