@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -21,7 +21,7 @@ export class TasksService {
       const newTask = await new this.taskModel(createTaskDto).save();
 
       await this.userModel.findByIdAndUpdate(user.id, { $push: { tasks: newTask._id } });
-      const taskResponse: TaskResponse= {
+      const taskResponse: TaskResponse = {
         status: 'success',
         statusCode: 201,
         task: newTask
@@ -33,16 +33,22 @@ export class TasksService {
     }
   }
 
-  findAll() {
-    return `This action returns all tasks`;
-  }
 
-  findOne(id: number) {
-    return `This action returns a #${id} task`;
-  }
+  async updateTask(taskId: string, updateTaskDto: UpdateTaskDto): Promise<TaskResponse> {
+    try {
+      const updatedTask = await this.taskModel.findByIdAndUpdate(taskId, updateTaskDto, { new: true })
+        .orFail();
 
-  update(id: number, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
+      const taskResponse: TaskResponse = {
+        status: 'OK',
+        statusCode: 200,
+        task: updatedTask
+      };
+
+      return taskResponse;
+    } catch (exception) {
+      throw new NotFoundException(`Task with ID ${taskId} not found`)
+    }
   }
 
   remove(id: number) {

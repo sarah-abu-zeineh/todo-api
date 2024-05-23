@@ -6,26 +6,21 @@ import { Request } from 'express';
 
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(private readonly tasksService: TasksService) { }
 
   @Post()
   create(@Body() createTaskDto: CreateTaskDto, @Req() request: Request) {
     return this.tasksService.createTask(createTaskDto, request['user']);
   }
 
-  @Get()
-  findAll() {
-    return this.tasksService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(+id);
-  }
+  // @Get()
+  // findAll() {
+  //   return this.tasksService.findAll();
+  // }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto) {
-    return this.tasksService.update(+id, updateTaskDto);
+    return this.tasksService.updateTask(id, updateTaskDto);
   }
 
   @Delete(':id')
