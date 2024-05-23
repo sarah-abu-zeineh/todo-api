@@ -5,6 +5,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { UploadModule } from './upload/upload.module';
 import { FileModule } from './file/file.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthGuard } from './auth/auth.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -12,8 +15,16 @@ import { FileModule } from './file/file.module';
     UsersModule,
     UploadModule,
     FileModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      useClass: AuthGuard,
+      provide: APP_GUARD
+    }
+  ],
 })
-export class AppModule {}
+
+export class AppModule { }
