@@ -51,7 +51,14 @@ export class TasksService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} task`;
+  async removeTask(taskId: string, user) {
+    try {
+      await this.userModel.findByIdAndUpdate(user.id, { $pull: { tasks: taskId } }).orFail();
+      await this.taskModel.findByIdAndDelete(taskId).orFail();
+
+      return "Task deleted Successfully";
+    } catch (exception) {
+      throw new NotFoundException('Task Not Found');
+    }
   }
 }
