@@ -1,14 +1,22 @@
 // src/auth/auth.service.ts
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
+import { InjectModel } from '@nestjs/mongoose';
+import { User } from 'src/schemas/user.schema';
+import { Model } from 'mongoose';
+import { join } from 'path';
+import * as fs from 'fs';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
     private usersService: UsersService,
+    private mailService: MailService,
     private jwtService: JwtService
   ) { }
 
@@ -24,7 +32,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
     const userData: RegisterDto = { email, password: hashedPassword, name };
     const newUser = await this.usersService.create(userData, image);
-    const payload = { id: newUser._id, username: newUser.name};
+    const payload = { id: newUser._id, username: newUser.name };
 
     return {
       access_token: await this.jwtService.signAsync(payload),
@@ -37,11 +45,48 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
-  
+
     const payload = { id: user._id, username: user.name };
 
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
+  }
+
+  async sendRecoveryEmail(email: string) {
+    const userExistence: boolean = await this.usersService.checkUserExistence(email);
+
+    if (userExistence) {
+      const verificationCode = this.generateVerificationCode();
+      const verificationTemplatePath = 'verification-code.txt';
+      const user: User = await this.userModel.findOneAndUpdate({ email }, { verificationCode });
+      const text: string = this.generateEmailText(user, verificationTemplatePath);
+      const subject: string = "Email Recovery";
+
+      try {
+        await this.mailService.sendMail(email, subject, text);
+      } catch (error) {
+        throw new InternalServerErrorException('Failed to send recovery email');
+      }
+    } else {
+      throw new NotFoundException();
+    }
+  }
+
+  private generateVerificationCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  generateEmailText(user: User, filePath: string): string {
+    const templatePath = join('templates', filePath);
+    const emailTemplate = fs.readFileSync(templatePath, 'utf-8');
+
+    return this.populateEmailTemplate(emailTemplate, user);
+  }
+
+  populateEmailTemplate(template: string, user: User): string {
+    return template
+      .replace(/{name}/g, user.name)
+      .replace(/{verificationCode}/g, user.verificationCode);
   }
 }

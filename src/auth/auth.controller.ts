@@ -31,9 +31,15 @@ export class AuthController {
     return this.authService.signIn(LoginDto.email, LoginDto.password);
   }
 
+  @Post('send-recovery-email')
+  async sendRecoveryEmail(@Body('email') email: string) {
+    return this.authService.sendRecoveryEmail(email);
+  }
+
   @UseGuards(AuthGuard)
   @Get('profile')
   getProfile(@Request() request) {
     return request.user;
   }
+
 }
