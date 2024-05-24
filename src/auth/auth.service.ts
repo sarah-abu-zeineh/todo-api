@@ -54,9 +54,9 @@ export class AuthService {
   }
 
   async sendRecoveryEmail(email: string) {
-    const userExistence: boolean = await this.usersService.checkUserExistence(email);
+    const isUserExist: boolean = await this.usersService.checkUserExistence(email);
 
-    if (userExistence) {
+    if (isUserExist) {
       const verificationCode = this.generateVerificationCode();
       const verificationTemplatePath = 'verification-code.txt';
       const user: User = await this.userModel.findOneAndUpdate({ email }, { verificationCode });
@@ -71,6 +71,19 @@ export class AuthService {
     } else {
       throw new NotFoundException();
     }
+  }
+
+  async verifyEmail(email: string, verificationCode: string): Promise<boolean> {
+    const user = await this.usersService.findByEmail(email);
+
+    if (user && user.verificationCode === verificationCode) {
+      user.verificationCode = null;
+      user.isVerified = true;
+      await user.save();
+
+      return true;
+    }
+    return false;
   }
 
   private generateVerificationCode(): string {

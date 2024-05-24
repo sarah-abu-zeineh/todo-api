@@ -36,6 +36,11 @@ export class AuthController {
     return this.authService.sendRecoveryEmail(email);
   }
 
+  @Post('verify')
+  async verifyEmail(@Body('verificationCode') verificationCode: string, @Body('email') email: string) {
+    return this.authService.verifyEmail(email, verificationCode);
+  }
+
   @UseGuards(AuthGuard)
   @Get('profile')
   getProfile(@Request() request) {

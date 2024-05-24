@@ -21,7 +21,10 @@ export class User extends Document {
     tasks: Task[];
 
     @Prop({ nullable: true })
-    verificationCode: string;  
+    verificationCode: string;
+
+    @Prop({ nullable: true })
+    isVerified: boolean | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
