@@ -56,6 +56,10 @@ export class AuthService {
   async sendRecoveryEmail(email: string) {
     const isUserExist: boolean = await this.usersService.checkUserExistence(email);
 
+    if (!isUserExist) {
+      throw new NotFoundException('User not found');
+    }
+
     if (isUserExist) {
       const verificationCode = this.generateVerificationCode();
       const verificationTemplatePath = 'verification-code.txt';
@@ -65,6 +69,8 @@ export class AuthService {
 
       try {
         await this.mailService.sendMail(email, subject, text);
+        
+        return { message: 'Email send successfully' };
       } catch (error) {
         throw new InternalServerErrorException('Failed to send recovery email');
       }
@@ -76,6 +82,10 @@ export class AuthService {
   async verifyEmail(email: string, verificationCode: string): Promise<boolean> {
     const user = await this.usersService.findByEmail(email);
 
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     if (user && user.verificationCode === verificationCode) {
       user.verificationCode = null;
       user.isVerified = true;
@@ -84,6 +94,26 @@ export class AuthService {
       return true;
     }
     return false;
+  }
+
+  async resetPassword(email: string, newPassword: string) {
+    const user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isVerified) {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      user.isVerified = null;
+      user.password = hashedPassword;
+      await user.save();
+
+      return { message: 'Password updated successfully' };
+    }
+
+    throw new InternalServerErrorException('User is not verified');
   }
 
   private generateVerificationCode(): string {

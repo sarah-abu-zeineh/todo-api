@@ -41,6 +41,11 @@ export class AuthController {
     return this.authService.verifyEmail(email, verificationCode);
   }
 
+  @Post('reset')
+  async resetPassword(@Body('email') email: string, @Body('password') password: string) {
+    return this.authService.resetPassword(email, password);
+  }
+
   @UseGuards(AuthGuard)
   @Get('profile')
   getProfile(@Request() request) {
