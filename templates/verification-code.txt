@@ -1,0 +1,8 @@
+Dear {name},
+
+Your verification code is: {verificationCode}
+
+Please use this code to complete your verification process.
+
+Thank you,
+Lets Do 1 2 Team
