@@ -19,6 +19,9 @@ export class User extends Document {
 
     @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Tasks' }] })
     tasks: Task[];
+
+    @Prop({ nullable: true })
+    verificationCode: string;  
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
